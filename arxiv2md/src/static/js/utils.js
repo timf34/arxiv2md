@@ -28,30 +28,32 @@ function getFileName(element) {
 }
 
 function toggleFile(element) {
+    const sectionsInput = document.getElementById('sections');
     const patternInput = document.getElementById('pattern');
-    const patternFiles = patternInput.value ? patternInput.value.split(',').map((item) => item.trim()) : [];
-
+    const filterInput = sectionsInput || patternInput;
+    const filterValues = filterInput && filterInput.value ? filterInput.value.split(',').map((item) => item.trim()) : [];
+    const isSectionsMode = Boolean(sectionsInput);
     const directoryContainer = document.getElementById('directory-structure-container');
+    if (!directoryContainer || !filterInput) {return;}
     const treeLineElements = Array.from(directoryContainer.children).filter((child) => child.tagName === 'PRE');
 
-    // Skip the first two tree lines (header and repository name)
-    if (treeLineElements[0] === element || treeLineElements[1] === element) {
-        return;
-    }
+    // Skip the header lines
+    const skipCount = isSectionsMode ? 1 : 2;
+    if (treeLineElements.indexOf(element) < skipCount) {return;}
 
     element.classList.toggle('line-through');
     element.classList.toggle('text-gray-500');
 
-    const fileName = getFileName(element);
-    const fileIndex = patternFiles.indexOf(fileName);
+    const fileName = isSectionsMode ? element.textContent.trim() : getFileName(element);
+    const fileIndex = filterValues.indexOf(fileName);
 
     if (fileIndex !== -1) {
-        patternFiles.splice(fileIndex, 1);
+        filterValues.splice(fileIndex, 1);
     } else {
-        patternFiles.push(fileName);
+        filterValues.push(fileName);
     }
 
-    patternInput.value = patternFiles.join(', ');
+    filterInput.value = filterValues.join(', ');
 }
 
 // Copy functionality
@@ -129,12 +131,25 @@ function collectFormData(form) {
     const hiddenInput = document.getElementById('max_file_size_kb');
     const patternType = document.getElementById('pattern_type');
     const pattern = document.getElementById('pattern');
+    const removeRefs = form.querySelector('[name="remove_refs"]');
+    const removeToc = form.querySelector('[name="remove_toc"]');
+    const sectionFilterMode = form.querySelector('[name="section_filter_mode"]');
+    const sectionsInput = form.querySelector('[name="sections"]');
 
     if (inputText) {json_data.input_text = inputText.value;}
     if (token) {json_data.token = token.value;}
     if (hiddenInput) {json_data.max_file_size = hiddenInput.value;}
     if (patternType) {json_data.pattern_type = patternType.value;}
     if (pattern) {json_data.pattern = pattern.value;}
+    if (removeRefs) {json_data.remove_refs = removeRefs.checked;}
+    if (removeToc) {json_data.remove_toc = removeToc.checked;}
+    if (sectionFilterMode) {json_data.section_filter_mode = sectionFilterMode.value;}
+    if (sectionsInput) {
+        json_data.sections = sectionsInput.value
+            .split(',')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+    }
 
     return json_data;
 }

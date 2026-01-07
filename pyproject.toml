@@ -1,0 +1,50 @@
+[project]
+name = "arxiv2md"
+version = "0.1.0"
+description = "Convert arXiv HTML papers into Markdown for LLM context windows."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+    "httpx>=0.25.0",
+    "loguru>=0.7.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "tiktoken>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+]
+server = [
+    "fastapi[standard]>=0.109.1",
+    "jinja2>=3.1.2",
+    "uvicorn>=0.23.0",
+]
+
+[project.scripts]
+arxiv2md = "arxiv2md.__main__:main"
+
+[project.urls]
+homepage = "https://github.com/arxiv2md/arxiv2md"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = { where = ["arxiv2md/src"] } }
+include-package-data = true
+
+[tool.setuptools.package-data]
+server = ["templates/**/*.jinja"]
+
+[tool.pytest.ini_options]
+pythonpath = ["arxiv2md/src"]
+testpaths = ["arxiv2md/tests"]
+python_files = "test_*.py"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

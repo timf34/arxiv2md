@@ -65,7 +65,7 @@
 - [x] Wire into `server/query_processor.py` and `server/routers/ingest.py`.
 
 ## Phase 8: Web UI update
-- [ ] Update `arxiv_form.jinja`:
+- [x] Update `arxiv_form.jinja`:
   - Input placeholder and helper copy.
   - Toggles for remove refs/TOC and section filter mode.
 - [ ] Update server_config.py examples and version links for arXiv usage.
@@ -73,12 +73,12 @@
 - [ ] Add section selector UI in left panel.
 
 ## Phase 9: CLI parity (optional but planned)
-- [ ] Add `arxiv2md/__main__.py` with CLI flags.
-- [ ] Ensure CLI output mirrors web summary + content.
+- [x] Add `arxiv2md/__main__.py` with CLI flags.
+- [x] Ensure CLI output mirrors web summary + content.
 
 ## Phase 10: Tests and polish
 - [ ] Add API integration test covering full ingest flow.
-- [ ] Add unit tests for parser + markdown conversion.
+- [x] Add unit tests for parser + markdown conversion.
 - [ ] Validate behavior on HTML-unavailable inputs.
 
 
