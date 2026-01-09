@@ -1,3 +1,0 @@
-arxiv2md
-server
-static
