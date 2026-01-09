@@ -22,7 +22,7 @@ jobs:
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /opt/arxiv2md
+            cd /root/arxiv2md
             git pull origin main
             docker-compose build
             docker-compose up -d

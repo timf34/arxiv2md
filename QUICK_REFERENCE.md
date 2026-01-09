@@ -9,7 +9,7 @@ ssh root@209.97.185.144
 
 ## Update Application (After Pushing to GitHub)
 ```bash
-cd /opt/arxiv2md
+cd /root/arxiv2md
 sudo ./update.sh
 ```
 
@@ -57,7 +57,7 @@ systemctl reload nginx
 
 ## Emergency - Application Down
 ```bash
-cd /opt/arxiv2md
+cd /root/arxiv2md
 
 # View recent logs
 docker-compose logs --tail=50
@@ -144,7 +144,7 @@ docker-compose up -d --build
 
 ## File Locations
 
-- **Application**: `/opt/arxiv2md`
+- **Application**: `/root/arxiv2md`
 - **Nginx config**: `/etc/nginx/sites-available/arxiv2md`
 - **SSL certificates**: `/etc/letsencrypt/live/arxiv2md.org/`
 - **Systemd service**: `/etc/systemd/system/arxiv2md.service`

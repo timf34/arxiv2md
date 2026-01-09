@@ -8,7 +8,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-APP_DIR="/opt/arxiv2md"
+APP_DIR="/root/arxiv2md"
 
 echo -e "${GREEN}Updating arxiv2md...${NC}"
 

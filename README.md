@@ -78,8 +78,8 @@ For production deployment to DigitalOcean with Docker, Nginx, and SSL:
 **Quick start:**
 ```bash
 ssh root@YOUR_DROPLET_IP
-git clone https://github.com/timf34/arxiv2md.git /opt/arxiv2md
-cd /opt/arxiv2md
+git clone https://github.com/timf34/arxiv2md.git /root/arxiv2md
+cd /root/arxiv2md
 chmod +x deploy.sh
 sudo ./deploy.sh
 ```

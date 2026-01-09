@@ -72,8 +72,8 @@ ssh root@209.97.185.144
 # Download and run deploy script
 apt-get update
 apt-get install -y git
-git clone https://github.com/timf34/arxiv2md.git /opt/arxiv2md
-cd /opt/arxiv2md
+git clone https://github.com/timf34/arxiv2md.git /root/arxiv2md
+cd /root/arxiv2md
 
 # Make script executable and run it
 chmod +x deploy.sh
@@ -193,7 +193,7 @@ GitHub Actions will automatically deploy to your droplet.
 SSH to droplet and run update script:
 ```bash
 ssh root@209.97.185.144
-cd /opt/arxiv2md
+cd /root/arxiv2md
 sudo ./update.sh
 ```
 

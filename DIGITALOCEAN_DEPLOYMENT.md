@@ -32,8 +32,8 @@ Before running the automated deployment, you need to update the email in the dep
 # Download the repository
 apt-get update
 apt-get install -y git
-git clone https://github.com/timf34/arxiv2md.git /opt/arxiv2md
-cd /opt/arxiv2md
+git clone https://github.com/timf34/arxiv2md.git /root/arxiv2md
+cd /root/arxiv2md
 
 # Edit deploy.sh and change the EMAIL variable
 nano deploy.sh
@@ -163,13 +163,13 @@ After pushing changes to GitHub:
 
 ```bash
 ssh root@YOUR_DROPLET_IP
-cd /opt/arxiv2md
+cd /root/arxiv2md
 sudo ./update.sh
 ```
 
 Or manually:
 ```bash
-cd /opt/arxiv2md
+cd /root/arxiv2md
 git pull origin main
 docker-compose build
 docker-compose up -d

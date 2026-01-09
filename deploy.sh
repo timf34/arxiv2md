@@ -20,7 +20,7 @@ fi
 # Configuration
 DOMAIN="arxiv2md.org"
 EMAIL="timf34@gmail.com"
-APP_DIR="/opt/arxiv2md"
+APP_DIR="/root/arxiv2md"
 REPO_URL="https://github.com/timf34/arxiv2md.git"
 
 echo -e "${YELLOW}Domain: $DOMAIN${NC}"
