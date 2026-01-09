@@ -14,16 +14,18 @@
              id="error-message"
              data-message="{{ error_message }}">{{ error_message }}</div>
     {% endif %}
-    {% with show_examples=true %}
+    {% with show_examples=(not repo_url) %}
         {% include 'components/arxiv_form.jinja' %}
     {% endwith %}
 
-    {# URL tip #}
+    {# URL tip - only show on homepage #}
+    {% if not repo_url %}
     <div class="mt-6 text-center">
         <p class="text-sm text-gray-600">
-            You can also append <span class="font-mono text-[#B31B1B]">'2md'</span> to any arXiv paper URL!!
+            You can also append <span class="font-mono text-[#B31B1B]">'2md'</span> to any arXiv paper URL!
         </p>
     </div>
+    {% endif %}
 
     {% include 'components/result_arxiv.jinja' %}
 {% endblock content %}
