@@ -29,7 +29,7 @@ server = [
 arxiv2md = "arxiv2md.__main__:main"
 
 [project.urls]
-homepage = "https://github.com/arxiv2md/arxiv2md"
+homepage = "https://github.com/timf34/arxiv2md"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
