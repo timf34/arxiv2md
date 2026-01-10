@@ -2,100 +2,117 @@
 
 <div align="center">
   <img src="assets/image.png" alt="arxiv2md" width="400">
+
+  **Convert arXiv papers to clean Markdown for LLMs**
+
+  [Live Demo](https://arxiv2md.org) · [Documentation](DIGITALOCEAN_DEPLOYMENT.md) · [Report Bug](https://github.com/timf34/arxiv2md/issues)
 </div>
 
-Convert arXiv papers to clean Markdown. Particularly useful for prompting LLMs. This repo contains:
-- A FastAPI web app (local-first) that mirrors the gitingest UX.
-- A CLI for one-off conversions.
+---
 
-## Requirements
-- Python 3.10+
+## Why?
 
-## Local Web App
-1) Create a virtual environment and install server deps:
+I got tired of copy-pasting arXiv PDFs/HTML into LLMs and fighting references, TOCs, and token bloat. So I made [gitingest.com](https://gitingest.com) but for arXiv papers.
+
+**The trick:** Just append `2md` to any arXiv URL:
+
+```
+https://arxiv.org/abs/2501.11120v1  →  https://arxiv2md.org/abs/2501.11120v1
+```
+
+## Features
+
+- **Zero friction**: Append `2md` to any arXiv URL (works with `/abs/`, `/html/`, `/pdf/`)
+- **Section filtering**: Remove references, appendix, or select only specific sections
+- **Clean output**: No messy PDFs or broken formatting
+- **Section tree**: Visual overview - click to include/exclude sections
+- **LLM-optimized**: Token counts, clean citations
+- **Fast**: Cached results, direct HTML parsing
+
+## How It Works
+
+arxiv2md is fast because it takes advantage of arXiv's HTML format for papers. Instead of parsing PDFs (slow, error-prone), we directly parse the structured HTML that arXiv provides for newer papers. This gives us:
+
+- Clean section boundaries and hierarchies
+- Proper math rendering (MathML → Markdown)
+- Reliable table extraction
+- Fast processing (no OCR or PDF parsing)
+
+The HTML is converted to Markdown using BeautifulSoup4, with custom logic for handling citations, math equations, and paper structure.
+
+## Usage
+
+### Web App
+
+Visit [arxiv2md.org](https://arxiv2md.org) and paste any arXiv URL, or append `2md` to an arXiv URL in your browser.
+
+### CLI
+
 ```bash
-python -m venv .venv
-# Windows
-.\.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
-
-pip install -e .[server]
-```
-
-2) Run the web server from the repo root:
-```bash
-uvicorn server.main:app --reload --app-dir src
-```
-
-3) Open:
-```
-http://127.0.0.1:8000
-```
-
-## CLI
-1) Install the CLI:
-```bash
-python -m venv .venv
-.\.venv\Scripts\activate  # or source .venv/bin/activate
+# Install
 pip install -e .
+
+# Basic usage
+arxiv2md 2501.11120v1 -o paper.md
+
+# Only include specific sections
+arxiv2md 2501.11120v1 --section-filter-mode include --sections "Abstract,Introduction" -o -
+
+# Remove references and TOC
+arxiv2md 2501.11120v1 --remove-refs --remove-toc -o -
 ```
 
-2) Run:
-```bash
-arxiv2md 2501.11120v1 -o -
-```
+## Section Filtering
 
-Common flags:
-```bash
-arxiv2md 2501.11120v1 \
-  --remove-refs \
-  --remove-toc \
-  --section-filter-mode include \
-  --sections "Abstract,Introduction" \
-  -o -
-```
-Include the section tree before the content:
-```bash
-arxiv2md 2501.11120v1 --include-tree -o -
-```
+**Exclude mode** (default): Remove unwanted sections like References or Appendix
+**Include mode**: Extract only what you need like "Abstract,Introduction,Conclusion"
 
-## Configuration
-Environment variables (optional):
-- ARXIV2MD_CACHE_PATH (default: .arxiv2md_cache)
-- ARXIV2MD_CACHE_TTL_SECONDS (default: 86400)
-- ARXIV2MD_FETCH_TIMEOUT_S (default: 10.0)
-- ARXIV2MD_FETCH_MAX_RETRIES (default: 2)
-- ARXIV2MD_FETCH_BACKOFF_S (default: 0.5)
-- ARXIV2MD_USER_AGENT (default: arxiv2md/0.1 (+https://github.com/arxiv2md/arxiv2md))
+The section tree in the UI lets you click sections to toggle them in/out.
 
-## Tests
+## Development
+
 ```bash
+# Run locally
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[server]
+uvicorn server.main:app --reload --app-dir src
+
+# Run tests
 pip install -e .[dev]
 pytest tests
 ```
 
 ## Deployment
 
-For production deployment to DigitalOcean with Docker, Nginx, and SSL:
+One-command deployment to DigitalOcean with Docker, Nginx, and SSL:
 
-**Quick start:**
 ```bash
-ssh root@YOUR_DROPLET_IP
 git clone https://github.com/timf34/arxiv2md.git /root/arxiv2md
 cd /root/arxiv2md
 chmod +x deploy.sh
 sudo ./deploy.sh
 ```
 
-**Documentation:**
-- **Step-by-step guide**: [DEPLOYMENT_STEPS.md](DEPLOYMENT_STEPS.md) - Complete walkthrough
-- **Detailed reference**: [DIGITALOCEAN_DEPLOYMENT.md](DIGITALOCEAN_DEPLOYMENT.md) - Full documentation
-- **Quick commands**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Common operations
+See [DEPLOYMENT_STEPS.md](DEPLOYMENT_STEPS.md) for details.
 
-**Automated deployment:**
-See [.github/workflows/deploy.yml](.github/workflows/deploy.yml) for GitHub Actions setup.
+## Tech Stack
 
-## Thanks to...
+- FastAPI backend with BeautifulSoup4 for HTML parsing
+- Tailwind CSS frontend
+- Docker + Nginx + Let's Encrypt for deployment
+- Local file cache with TTL
 
-Gitingest for paving the way and being a great tool! https://github.com/coderamp-labs/gitingest
+## Contributing
+
+PRs welcome! Fork the repo, create a feature branch, add tests if applicable, and submit a PR.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Inspired by [gitingest](https://github.com/coderamp-labs/gitingest) for digesting Git repos.
+
+Star this repo if you find it useful!
