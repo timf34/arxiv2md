@@ -1,4 +1,4 @@
-"""Pydantic models for the query form."""
+"""Pydantic models for the API."""
 
 from __future__ import annotations
 
@@ -9,46 +9,23 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from server.server_config import MAX_FILE_SIZE_KB
 
-# needed for type checking (pydantic)
 if TYPE_CHECKING:
     from server.form_types import IntForm, OptStrForm, StrForm
 
 
 class SectionFilterMode(str, Enum):
-    """Enumeration for section filtering modes."""
+    """Section filtering modes."""
 
     INCLUDE = "include"
     EXCLUDE = "exclude"
 
 
+# Alias for backward compatibility
 PatternType = SectionFilterMode
 
 
 class IngestRequest(BaseModel):
-    """Request model for the /api/ingest endpoint.
-
-    Attributes
-    ----------
-    input_text : str
-        The arXiv URL or ID to ingest.
-    remove_refs : bool
-        Remove references section from the output.
-    remove_toc : bool
-        Remove table of contents from the output.
-    section_filter_mode : SectionFilterMode
-        Section filtering mode (include or exclude).
-    sections : list[str]
-        Section titles to include or exclude.
-    max_file_size : int | None
-        Deprecated: retained for compatibility with gitingest UI.
-    pattern_type : SectionFilterMode | None
-        Deprecated: retained for compatibility with gitingest UI.
-    pattern : str
-        Deprecated: retained for compatibility with gitingest UI.
-    token : str | None
-        Deprecated: retained for compatibility with gitingest UI.
-
-    """
+    """Request model for the /api/ingest endpoint."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -57,34 +34,26 @@ class IngestRequest(BaseModel):
     remove_toc: bool = Field(default=False, description="Remove table of contents from output")
     remove_inline_citations: bool = Field(
         default=False,
-        description="Remove inline citations and internal paper links (section references) from output",
+        description="Remove inline citations and internal paper links from output",
     )
     section_filter_mode: SectionFilterMode = Field(
         default=SectionFilterMode.EXCLUDE,
         description="Section filtering mode",
     )
-    sections: list[str] = Field(default_factory=list, description="Section titles to include or exclude")
+    sections: list[str] = Field(default_factory=list, description="Section titles to filter")
 
-    max_file_size: int | None = Field(
-        default=None,
-        ge=1,
-        le=MAX_FILE_SIZE_KB,
-        description="Deprecated: file size in KB",
-    )
-    pattern_type: SectionFilterMode | None = Field(
-        default=None,
-        description="Deprecated: pattern type",
-    )
-    pattern: str = Field(default="", description="Deprecated: pattern string")
-    token: str | None = Field(default=None, description="Deprecated: GitHub token")
+    # Deprecated fields for gitingest compatibility
+    max_file_size: int | None = Field(default=None, ge=1, le=MAX_FILE_SIZE_KB)
+    pattern_type: SectionFilterMode | None = Field(default=None)
+    pattern: str = Field(default="")
+    token: str | None = Field(default=None)
 
     @field_validator("input_text")
     @classmethod
     def validate_input_text(cls, v: str) -> str:
-        """Validate that ``input_text`` is not empty."""
+        """Validate that input_text is not empty."""
         if not v.strip():
-            err = "input_text cannot be empty"
-            raise ValueError(err)
+            raise ValueError("input_text cannot be empty")
         return v.strip()
 
     @field_validator("sections", mode="before")
@@ -100,53 +69,12 @@ class IngestRequest(BaseModel):
     @field_validator("pattern")
     @classmethod
     def validate_pattern(cls, v: str) -> str:
-        """Validate ``pattern`` field."""
+        """Strip whitespace from pattern field."""
         return v.strip()
 
 
 class IngestSuccessResponse(BaseModel):
-    """Success response model for the /api/ingest endpoint.
-
-    Attributes
-    ----------
-    arxiv_id : str | None
-        The arXiv identifier.
-    version : str | None
-        The arXiv version string, if present.
-    title : str | None
-        The paper title.
-    source_url : str | None
-        The canonical URL for the arXiv abstract.
-    summary : str
-        Summary of the ingestion process including token estimates.
-    digest_url : str
-        URL to download the full digest content from the local cache.
-    tree : str
-        Section tree structure of the paper.
-    sections_tree : str | None
-        Section tree structure (alias for tree).
-    content : str
-        Processed markdown content.
-    remove_refs : bool | None
-        Whether references were removed.
-    remove_toc : bool | None
-        Whether the table of contents was removed.
-    section_filter_mode : str | None
-        Section filtering mode.
-    sections : list[str] | None
-        Sections included or excluded.
-    repo_url : str | None
-        Deprecated: original repository URL.
-    short_repo_url : str | None
-        Deprecated: short form of repository URL.
-    default_max_file_size : int | None
-        Deprecated: file size slider position used.
-    pattern_type : str | None
-        Deprecated: pattern type used for filtering.
-    pattern : str | None
-        Deprecated: pattern used for filtering.
-
-    """
+    """Success response model for the /api/ingest endpoint."""
 
     arxiv_id: str | None = Field(default=None, description="arXiv identifier")
     version: str | None = Field(default=None, description="arXiv version")
@@ -155,67 +83,40 @@ class IngestSuccessResponse(BaseModel):
     summary: str = Field(..., description="Ingestion summary with token estimates")
     digest_url: str = Field(..., description="URL to download the full digest content")
     tree: str = Field(..., description="Section tree structure")
-    sections_tree: str | None = Field(default=None, description="Section tree structure (alias)")
+    sections_tree: str | None = Field(default=None, description="Section tree (alias for tree)")
     content: str = Field(..., description="Processed markdown content")
-    remove_refs: bool | None = Field(default=None, description="References removed")
-    remove_toc: bool | None = Field(default=None, description="TOC removed")
-    section_filter_mode: str | None = Field(default=None, description="Section filter mode")
-    sections: list[str] | None = Field(default=None, description="Sections included or excluded")
-    repo_url: str | None = Field(default=None, description="Deprecated: original repository URL")
-    short_repo_url: str | None = Field(default=None, description="Deprecated: short repository URL")
-    default_max_file_size: int | None = Field(default=None, description="Deprecated: file size slider position used")
-    pattern_type: str | None = Field(default=None, description="Deprecated: pattern type used")
-    pattern: str | None = Field(default=None, description="Deprecated: pattern used")
+    remove_refs: bool | None = Field(default=None)
+    remove_toc: bool | None = Field(default=None)
+    section_filter_mode: str | None = Field(default=None)
+    sections: list[str] | None = Field(default=None)
+
+    # Deprecated fields for gitingest compatibility
+    repo_url: str | None = Field(default=None)
+    short_repo_url: str | None = Field(default=None)
+    default_max_file_size: int | None = Field(default=None)
+    pattern_type: str | None = Field(default=None)
+    pattern: str | None = Field(default=None)
 
 
 class IngestErrorResponse(BaseModel):
-    """Error response model for the /api/ingest endpoint.
-
-    Attributes
-    ----------
-    error : str
-        Error message describing what went wrong.
-
-    """
+    """Error response model for the /api/ingest endpoint."""
 
     error: str = Field(..., description="Error message")
 
 
-# Union type for API responses
 IngestResponse = Union[IngestSuccessResponse, IngestErrorResponse]
 
 
 class QueryForm(BaseModel):
-    """Form data for the query.
-
-    Attributes
-    ----------
-    input_text : str
-        Text or URL supplied in the form.
-    remove_refs : bool
-        Remove references section from the output.
-    remove_toc : bool
-        Remove table of contents from the output.
-    section_filter_mode : str
-        Section filtering mode.
-    sections : str
-        Comma-separated section titles to include or exclude.
-    max_file_size : int | None
-        Deprecated: maximum allowed file size for the input.
-    pattern_type : str | None
-        Deprecated: pattern type used in gitingest.
-    pattern : str
-        Deprecated: pattern string used in gitingest.
-    token : str | None
-        Deprecated: GitHub personal access token (PAT).
-
-    """
+    """Form data for the query."""
 
     input_text: str
     remove_refs: bool = False
     remove_toc: bool = False
     section_filter_mode: str = SectionFilterMode.EXCLUDE.value
     sections: str = ""
+
+    # Deprecated fields for gitingest compatibility
     max_file_size: int | None = None
     pattern_type: str | None = None
     pattern: str = ""
@@ -230,27 +131,7 @@ class QueryForm(BaseModel):
         pattern: StrForm,
         token: OptStrForm,
     ) -> QueryForm:
-        """Create a QueryForm from FastAPI form parameters.
-
-        Parameters
-        ----------
-        input_text : StrForm
-            The input text provided by the user.
-        max_file_size : IntForm
-            Deprecated: max file size from gitingest UI.
-        pattern_type : StrForm
-            Deprecated: pattern type from gitingest UI.
-        pattern : StrForm
-            Deprecated: pattern string from gitingest UI.
-        token : OptStrForm
-            Deprecated: GitHub token from gitingest UI.
-
-        Returns
-        -------
-        QueryForm
-            The QueryForm instance.
-
-        """
+        """Create a QueryForm from FastAPI form parameters."""
         return cls(
             input_text=input_text,
             max_file_size=max_file_size,

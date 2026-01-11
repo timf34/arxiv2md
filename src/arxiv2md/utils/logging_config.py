@@ -1,4 +1,4 @@
-"""Logging configuration for gitingest using loguru.
+"""Logging configuration for arxiv2md using loguru.
 
 This module provides structured JSON logging suitable for Kubernetes deployments
 while also supporting human-readable logging for development.
