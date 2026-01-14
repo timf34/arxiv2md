@@ -3,5 +3,6 @@
 from server.routers.dynamic import router as dynamic
 from server.routers.index import router as index
 from server.routers.ingest import router as ingest
+from server.routers.markdown_api import router as markdown_api
 
-__all__ = ["dynamic", "index", "ingest"]
+__all__ = ["dynamic", "index", "ingest", "markdown_api"]

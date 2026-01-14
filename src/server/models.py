@@ -107,6 +107,15 @@ class IngestErrorResponse(BaseModel):
 IngestResponse = Union[IngestSuccessResponse, IngestErrorResponse]
 
 
+class MarkdownJsonResponse(BaseModel):
+    """Simplified JSON response for the /api/json endpoint."""
+
+    arxiv_id: str | None = Field(default=None, description="arXiv identifier")
+    title: str | None = Field(default=None, description="Paper title")
+    source_url: str | None = Field(default=None, description="Canonical arXiv abstract URL")
+    content: str = Field(..., description="Processed markdown content")
+
+
 class QueryForm(BaseModel):
     """Form data for the query."""
 

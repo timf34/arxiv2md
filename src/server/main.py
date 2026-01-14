@@ -5,13 +5,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Import logging configuration first to intercept all logging
 from arxiv2md.utils.logging_config import get_logger
-from server.routers import dynamic, index, ingest
+from server.routers import dynamic, index, ingest, markdown_api
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,8 +22,13 @@ load_dotenv()
 # Initialize logger for this module
 logger = get_logger(__name__)
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Initialize the FastAPI application
 app = FastAPI(docs_url=None, redoc_url=None)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # Mount static files dynamically to serve CSS, JS, and other static assets
@@ -125,4 +133,5 @@ def openapi_json() -> JSONResponse:
 # Include routers for modular endpoints
 app.include_router(index)
 app.include_router(ingest)
+app.include_router(markdown_api)
 app.include_router(dynamic)
