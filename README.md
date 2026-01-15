@@ -62,6 +62,28 @@ arxiv2md 2501.11120v1 --section-filter-mode include --sections "Abstract,Introdu
 arxiv2md 2501.11120v1 --remove-refs --remove-toc -o -
 ```
 
+### API
+
+Two GET endpoints for programmatic access:
+
+```bash
+# JSON response (with metadata)
+curl "https://arxiv2md.org/api/json?url=2312.00752"
+
+# Raw markdown
+curl "https://arxiv2md.org/api/markdown?url=2312.00752"
+```
+
+**Parameters:**
+| Param | Default | Description |
+|-------|---------|-------------|
+| `url` | required | arXiv URL or ID |
+| `remove_refs` | `true` | Remove references |
+| `remove_toc` | `true` | Remove table of contents |
+| `remove_citations` | `true` | Remove inline citations |
+
+**Rate limit:** 30 requests/minute per IP.
+
 ## Section Filtering
 
 **Exclude mode** (default): Remove unwanted sections like References or Appendix
