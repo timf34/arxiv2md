@@ -18,6 +18,7 @@ async def ingest_paper(
     arxiv_id: str,
     version: str | None,
     html_url: str,
+    ar5iv_url: str | None = None,
     remove_refs: bool,
     remove_toc: bool,
     remove_inline_citations: bool = False,
@@ -32,7 +33,7 @@ async def ingest_paper(
         If True, completely remove inline citation links from the output.
         If False (default), citation URLs are stripped but text is kept.
     """
-    html = await fetch_arxiv_html(html_url, arxiv_id=arxiv_id, version=version, use_cache=True)
+    html = await fetch_arxiv_html(html_url, arxiv_id=arxiv_id, version=version, use_cache=True, ar5iv_url=ar5iv_url)
     parsed = parse_arxiv_html(html)
 
     filtered_sections = filter_sections(parsed.sections, mode=section_filter_mode, selected=sections)

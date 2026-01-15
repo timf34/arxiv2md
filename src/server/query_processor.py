@@ -71,6 +71,7 @@ async def process_query(
             arxiv_id=query.arxiv_id,
             version=query.version,
             html_url=query.html_url,
+            ar5iv_url=query.ar5iv_url,
             remove_refs=query.remove_refs,
             remove_toc=query.remove_toc,
             remove_inline_citations=query.remove_inline_citations,

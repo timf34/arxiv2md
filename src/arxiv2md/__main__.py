@@ -33,6 +33,7 @@ async def _async_main(args: argparse.Namespace) -> None:
         arxiv_id=query.arxiv_id,
         version=query.version,
         html_url=query.html_url,
+        ar5iv_url=query.ar5iv_url,
         remove_refs=args.remove_refs,
         remove_toc=args.remove_toc,
         remove_inline_citations=args.remove_inline_citations,
