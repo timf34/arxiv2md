@@ -297,15 +297,33 @@ def _serialize_table(table: Tag, *, remove_inline_citations: bool = False) -> st
         return f"$$ {eqn_text} $$"
 
     rows = []
-    for row in table.find_all("tr", recursive=False):
-        cells = row.find_all(["th", "td"], recursive=False)
-        if not cells:
-            continue
-        values = []
-        for cell in cells:
-            cell_text = _cleanup_inline_text(_serialize_inline(cell, remove_inline_citations=remove_inline_citations)).replace("\n", "<br>")
-            values.append(cell_text)
-        rows.append(values)
+    # Find rows in tbody, thead, tfoot, or directly in table
+    # Handle nested structure where rows might be inside tbody/thead/tfoot
+    tbody_elements = table.find_all(["tbody", "thead", "tfoot"], recursive=False)
+    
+    if tbody_elements:
+        # Table has tbody/thead/tfoot structure - find rows within them
+        for tbody in tbody_elements:
+            for row in tbody.find_all("tr", recursive=False):
+                cells = row.find_all(["th", "td"], recursive=False)
+                if not cells:
+                    continue
+                values = []
+                for cell in cells:
+                    cell_text = _cleanup_inline_text(_serialize_inline(cell, remove_inline_citations=remove_inline_citations)).replace("\n", "<br>")
+                    values.append(cell_text)
+                rows.append(values)
+    else:
+        # Table has no tbody/thead/tfoot - find rows directly in table
+        for row in table.find_all("tr", recursive=False):
+            cells = row.find_all(["th", "td"], recursive=False)
+            if not cells:
+                continue
+            values = []
+            for cell in cells:
+                cell_text = _cleanup_inline_text(_serialize_inline(cell, remove_inline_citations=remove_inline_citations)).replace("\n", "<br>")
+                values.append(cell_text)
+            rows.append(values)
 
     if not rows:
         return ""
@@ -323,18 +341,40 @@ def _serialize_table(table: Tag, *, remove_inline_citations: bool = False) -> st
 
 
 def _serialize_figure(figure: Tag, *, remove_inline_citations: bool = False) -> str:
+    # Check if this is a table figure (ltx_table class)
+    figure_classes = " ".join(figure.get("class", []))
+    is_table_figure = "ltx_table" in figure_classes
+
     caption_tag = figure.find("figcaption")
     caption = _normalize_text(_serialize_inline(caption_tag, remove_inline_citations=remove_inline_citations)) if caption_tag else ""
-    img = figure.find("img")
-    src = img.get("src") if img else None
-    alt = img.get("alt") if img else None
 
     lines = []
-    if caption:
-        lines.append(f"Figure: {caption}")
-    if src:
-        image_label = alt or "Image"
-        lines.append(f"{image_label}: {src}")
+
+    if is_table_figure:
+        # Handle table figures - find and serialize the embedded table
+        # Note: fix_tabular_tables strips attributes, so search for any table element
+        table = figure.find("table")
+        if table:
+            table_md = _serialize_table(table, remove_inline_citations=remove_inline_citations)
+            if caption:
+                lines.append(f"**{caption}**")
+            if table_md:
+                lines.append(table_md)
+        elif caption:
+            # Fallback if no table found but has caption
+            lines.append(f"Table: {caption}")
+    else:
+        # Handle regular image figures
+        img = figure.find("img")
+        src = img.get("src") if img else None
+        alt = img.get("alt") if img else None
+
+        if caption:
+            lines.append(f"Figure: {caption}")
+        if src:
+            image_label = alt or "Image"
+            lines.append(f"{image_label}: {src}")
+
     return "\n".join(lines).strip()
 
 
