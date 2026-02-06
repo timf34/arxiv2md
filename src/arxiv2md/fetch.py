@@ -26,18 +26,37 @@ async def fetch_arxiv_html(
     arxiv_id: str,
     version: str | None,
     use_cache: bool = True,
+    ar5iv_url: str | None = None,
 ) -> str:
-    """Fetch arXiv HTML and cache it locally."""
+    """Fetch arXiv HTML and cache it locally.
+
+    Tries html_url first (arxiv.org), then falls back to ar5iv_url if 404.
+    """
     cache_dir = _cache_dir_for(arxiv_id, version)
     html_path = cache_dir / "source.html"
 
     if use_cache and _is_cache_fresh(html_path):
         return html_path.read_text(encoding="utf-8")
 
-    html_text = await _fetch_with_retries(html_url)
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    html_path.write_text(html_text, encoding="utf-8")
-    return html_text
+    # Try primary URL (arxiv.org) first
+    try:
+        html_text = await _fetch_with_retries(html_url)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        html_path.write_text(html_text, encoding="utf-8")
+        return html_text
+    except RuntimeError as primary_error:
+        # If we got 404 and have ar5iv fallback, try it
+        if ar5iv_url and "does not have an HTML version" in str(primary_error):
+            try:
+                html_text = await _fetch_with_retries(ar5iv_url)
+                cache_dir.mkdir(parents=True, exist_ok=True)
+                html_path.write_text(html_text, encoding="utf-8")
+                return html_text
+            except Exception:
+                # If ar5iv also fails, raise the original error
+                pass
+        # Re-raise the original error
+        raise primary_error
 
 
 async def _fetch_with_retries(url: str) -> str:
