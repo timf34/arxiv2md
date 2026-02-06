@@ -29,3 +29,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Agent MD files 
+PLAN.md 
+DEPLOYMENT_STEPS.md
+DIGITALOCEAN_STEPS.md
