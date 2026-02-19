@@ -30,7 +30,8 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Agent MD files 
-PLAN.md 
+# Agent MD files
+PLAN.md
 DEPLOYMENT_STEPS.md
-DIGITALOCEAN_STEPS.md
+DIGITALOCEAN_DEPLOYMENT.md
+QUICK_REFERENCE.md
