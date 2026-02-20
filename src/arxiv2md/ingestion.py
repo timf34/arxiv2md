@@ -24,6 +24,7 @@ async def ingest_paper(
     remove_inline_citations: bool = False,
     section_filter_mode: str,
     sections: list[str],
+    include_frontmatter: bool = False,
 ) -> tuple[IngestionResult, dict[str, str | list[str] | None]]:
     """Fetch, parse, and serialize an arXiv paper into Markdown.
 
@@ -59,6 +60,7 @@ async def ingest_paper(
         sections=filtered_sections,
         include_toc=not remove_toc,
         include_abstract_in_tree=parsed.abstract is not None,
+        include_frontmatter=include_frontmatter,
     )
 
     metadata = {

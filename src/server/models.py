@@ -36,6 +36,10 @@ class IngestRequest(BaseModel):
         default=False,
         description="Remove inline citations and internal paper links from output",
     )
+    include_frontmatter: bool = Field(
+        default=False,
+        description="Prepend YAML frontmatter with paper metadata",
+    )
     section_filter_mode: SectionFilterMode = Field(
         default=SectionFilterMode.EXCLUDE,
         description="Section filtering mode",
@@ -85,6 +89,7 @@ class IngestSuccessResponse(BaseModel):
     tree: str = Field(..., description="Section tree structure")
     sections_tree: str | None = Field(default=None, description="Section tree (alias for tree)")
     content: str = Field(..., description="Processed markdown content")
+    frontmatter: str | None = Field(default=None, description="YAML frontmatter block with paper metadata")
     remove_refs: bool | None = Field(default=None)
     remove_toc: bool | None = Field(default=None)
     section_filter_mode: str | None = Field(default=None)

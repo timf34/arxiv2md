@@ -26,6 +26,7 @@ async def _perform_ingestion(
     remove_refs: bool,
     remove_toc: bool,
     remove_inline_citations: bool = False,
+    include_frontmatter: bool = False,
     section_filter_mode: str = "exclude",
     sections: list[str] | None = None,
 ) -> JSONResponse:
@@ -48,6 +49,7 @@ async def _perform_ingestion(
             remove_refs=remove_refs,
             remove_toc=remove_toc,
             remove_inline_citations=remove_inline_citations,
+            include_frontmatter=include_frontmatter,
             section_filter_mode=section_filter_mode,
             sections=sections or [],
         )

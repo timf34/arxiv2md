@@ -12,6 +12,9 @@ except ImportError:  # pragma: no cover - optional dependency
 from arxiv2md.schemas import IngestionResult, SectionNode
 
 
+_ARXIV_ABS_BASE = "https://arxiv.org/abs/"
+
+
 def format_paper(
     *,
     arxiv_id: str,
@@ -22,6 +25,7 @@ def format_paper(
     sections: list[SectionNode],
     include_toc: bool,
     include_abstract_in_tree: bool = True,
+    include_frontmatter: bool = False,
 ) -> IngestionResult:
     """Create summary, section tree, and content."""
     tree_lines = ["Sections:"]
@@ -31,6 +35,9 @@ def format_paper(
     tree = "\n".join(tree_lines)
     content = _render_content(abstract=abstract, sections=sections, include_toc=include_toc)
 
+    section_count = count_sections(sections)
+    token_estimate = _format_token_count(tree + "\n" + content)
+
     summary_lines = []
     if title:
         summary_lines.append(f"Title: {title}")
@@ -39,15 +46,55 @@ def format_paper(
         summary_lines.append(f"Version: {version}")
     if authors:
         summary_lines.append(f"Authors: {', '.join(authors)}")
-    summary_lines.append(f"Sections: {count_sections(sections)}")
-
-    token_estimate = _format_token_count(tree + "\n" + content)
+    summary_lines.append(f"Sections: {section_count}")
     if token_estimate:
         summary_lines.append(f"Estimated tokens: {token_estimate}")
 
     summary = "\n".join(summary_lines)
 
-    return IngestionResult(summary=summary, sections_tree=tree, content=content)
+    frontmatter = None
+    if include_frontmatter:
+        frontmatter = _generate_frontmatter(
+            title=title,
+            arxiv_id=arxiv_id,
+            version=version,
+            authors=authors,
+            section_count=section_count,
+            token_estimate=token_estimate,
+        )
+
+    return IngestionResult(summary=summary, sections_tree=tree, content=content, frontmatter=frontmatter)
+
+
+def _generate_frontmatter(
+    *,
+    title: str | None,
+    arxiv_id: str,
+    version: str | None,
+    authors: list[str],
+    section_count: int,
+    token_estimate: str | None,
+) -> str:
+    """Generate YAML frontmatter block with paper metadata."""
+    lines = ["---"]
+    if title:
+        lines.append(f"title: \"{_escape_yaml_string(title)}\"")
+    if version:
+        lines.append(f"version: \"{version}\"")
+    if authors:
+        quoted = ", ".join(f'"{_escape_yaml_string(a)}"' for a in authors)
+        lines.append(f"authors: [{quoted}]")
+    lines.append(f"url: \"{_ARXIV_ABS_BASE}{arxiv_id}\"")
+    lines.append(f"sections: {section_count}")
+    if token_estimate:
+        lines.append(f"estimated_tokens: \"{token_estimate}\"")
+    lines.append("---")
+    return "\n".join(lines)
+
+
+def _escape_yaml_string(value: str) -> str:
+    """Escape characters that are special in YAML string values."""
+    return value.replace("\\", "\\\\").replace("\"", "\\\"")
 
 
 def count_sections(sections: Iterable[SectionNode]) -> int:

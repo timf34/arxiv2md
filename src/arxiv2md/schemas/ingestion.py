@@ -11,3 +11,4 @@ class IngestionResult(BaseModel):
     summary: str
     sections_tree: str
     content: str
+    frontmatter: str | None = None

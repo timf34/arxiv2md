@@ -84,6 +84,7 @@ async def api_markdown(
     remove_refs: bool = Query(default=True, description="Remove references section"),
     remove_toc: bool = Query(default=True, description="Remove table of contents"),
     remove_citations: bool = Query(default=True, description="Remove inline citations"),
+    frontmatter: bool = Query(default=False, description="Prepend YAML frontmatter with paper metadata"),
 ) -> PlainTextResponse:
     """Convert an arXiv paper to markdown and return raw markdown text.
 
@@ -102,6 +103,7 @@ async def api_markdown(
             remove_inline_citations=remove_citations,
             section_filter_mode="exclude",
             sections=[],
+            include_frontmatter=frontmatter,
         )
 
         if isinstance(result, IngestErrorResponse):
@@ -110,7 +112,10 @@ async def api_markdown(
                 content=f"Error: {result.error}",
             )
 
-        return PlainTextResponse(status_code=status.HTTP_200_OK, content=result.content)
+        md_content = result.content
+        if result.frontmatter:
+            md_content = result.frontmatter + "\n\n" + md_content
+        return PlainTextResponse(status_code=status.HTTP_200_OK, content=md_content)
 
     except ValueError as ve:
         return PlainTextResponse(status_code=status.HTTP_400_BAD_REQUEST, content=f"Validation error: {ve!s}")

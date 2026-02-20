@@ -42,6 +42,7 @@ async def process_query(
     pattern_type: PatternType | None = None,
     pattern: str | None = None,
     token: str | None = None,
+    include_frontmatter: bool = False,
 ) -> IngestResponse:
     """Process an arXiv query and return a markdown summary."""
     # These parameters are kept for API compatibility but not used
@@ -77,6 +78,7 @@ async def process_query(
             remove_inline_citations=query.remove_inline_citations,
             section_filter_mode=query.section_filter_mode,
             sections=query.sections,
+            include_frontmatter=include_frontmatter,
         )
         summary = result.summary
         tree = result.sections_tree
@@ -106,6 +108,7 @@ async def process_query(
         tree=tree,
         sections_tree=tree,
         content=content,
+        frontmatter=result.frontmatter,
         remove_refs=remove_refs,
         remove_toc=remove_toc,
         section_filter_mode=section_filter_mode,

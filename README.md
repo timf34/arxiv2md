@@ -60,6 +60,9 @@ arxiv2md 2501.11120v1 --section-filter-mode include --sections "Abstract,Introdu
 
 # Remove references and TOC
 arxiv2md 2501.11120v1 --remove-refs --remove-toc -o -
+
+# Include YAML frontmatter with paper metadata
+arxiv2md 2501.11120v1 --frontmatter -o paper.md
 ```
 
 ### API
@@ -81,6 +84,7 @@ curl "https://arxiv2md.org/api/markdown?url=2312.00752"
 | `remove_refs` | `true` | Remove references |
 | `remove_toc` | `true` | Remove table of contents |
 | `remove_citations` | `true` | Remove inline citations |
+| `frontmatter` | `false` | Prepend YAML frontmatter with paper metadata (`/api/markdown` only) |
 
 **Rate limit:** 30 requests/minute per IP.
 

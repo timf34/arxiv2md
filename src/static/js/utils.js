@@ -138,6 +138,7 @@ function collectFormData(form) {
     const removeRefs = form.querySelector('[name="remove_refs"]');
     const removeToc = form.querySelector('[name="remove_toc"]');
     const removeInlineCitations = form.querySelector('[name="remove_inline_citations"]');
+    const includeFrontmatter = form.querySelector('[name="include_frontmatter"]');
     const sectionFilterMode = form.querySelector('[name="section_filter_mode"]');
     const sectionsInput = form.querySelector('[name="sections"]');
 
@@ -149,6 +150,7 @@ function collectFormData(form) {
     if (removeRefs) {json_data.remove_refs = removeRefs.checked;}
     if (removeToc) {json_data.remove_toc = removeToc.checked;}
     if (removeInlineCitations) {json_data.remove_inline_citations = removeInlineCitations.checked;}
+    if (includeFrontmatter) {json_data.include_frontmatter = includeFrontmatter.checked;}
     if (sectionFilterMode) {json_data.section_filter_mode = sectionFilterMode.value;}
     if (sectionsInput) {
         json_data.sections = sectionsInput.value
@@ -199,7 +201,8 @@ function handleSuccessfulResponse(data) {
     // Set plain text content for summary, tree, and content
     document.getElementById('result-summary').value = data.summary || '';
     document.getElementById('directory-structure-content').value = data.tree || '';
-    document.getElementById('result-content').value = data.content || '';
+    const content = data.frontmatter ? data.frontmatter + '\n\n' + (data.content || '') : (data.content || '');
+    document.getElementById('result-content').value = content;
 
     // Populate directory structure lines as clickable <pre> elements
     const dirPre = document.getElementById('directory-structure-pre');
