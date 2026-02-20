@@ -15,6 +15,11 @@ DEFAULT_OUTPUT_FILE = "digest.txt"
 
 def main() -> None:
     """Run the CLI entry point for arXiv ingestion."""
+    # Ensure stdout can handle Unicode (e.g. accented author names) on Windows,
+    # where the default console encoding is often cp1252.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     args = _parse_args()
     try:
         asyncio.run(_async_main(args))
@@ -58,11 +63,7 @@ async def _async_main(args: argparse.Namespace) -> None:
         Path(output_target).write_text(output_text, encoding="utf-8")
         print(f"Output written to: {output_target}")
         print("\nSummary:")
-        # Handle Unicode characters that Windows console may not support
-        try:
-            print(result.summary)
-        except UnicodeEncodeError:
-            print(result.summary.encode("utf-8", errors="replace").decode("utf-8"))
+        print(result.summary)
 
 
 def _format_output(summary: str, tree: str, content: str, *, include_tree: bool) -> str:
