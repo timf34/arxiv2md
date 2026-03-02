@@ -37,6 +37,8 @@ async def _async_main(args: argparse.Namespace) -> None:
         remove_refs=args.remove_refs,
         remove_toc=args.remove_toc,
         remove_inline_citations=args.remove_inline_citations,
+        include_images=args.include_images,
+        html_base_url=query.html_url,
         section_filter_mode=args.section_filter_mode,
         sections=sections,
     )
@@ -125,6 +127,11 @@ def _parse_args() -> argparse.Namespace:
         "-o",
         default=None,
         help="Output file path. Use '-' to write to stdout.",
+    )
+    parser.add_argument(
+        "--include-images",
+        action="store_true",
+        help="Emit proper markdown image syntax with absolute arXiv URLs instead of plain text.",
     )
     parser.add_argument(
         "--include-tree",
