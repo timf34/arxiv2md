@@ -22,6 +22,8 @@ async def ingest_paper(
     remove_refs: bool,
     remove_toc: bool,
     remove_inline_citations: bool = False,
+    include_images: bool = False,
+    html_base_url: str | None = None,
     section_filter_mode: str,
     sections: list[str],
     include_frontmatter: bool = False,
@@ -49,7 +51,8 @@ async def ingest_paper(
         include_abstract = not sections or _ABSTRACT_TITLE in selected_lower
 
     for section in filtered_sections:
-        _populate_section_markdown(section, remove_inline_citations=remove_inline_citations)
+        image_base_url = f"{html_base_url.rstrip('/')}/" if include_images and html_base_url else None
+        _populate_section_markdown(section, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
 
     result = format_paper(
         arxiv_id=arxiv_id,
@@ -72,8 +75,8 @@ async def ingest_paper(
     return result, metadata
 
 
-def _populate_section_markdown(section, *, remove_inline_citations: bool = False) -> None:
+def _populate_section_markdown(section, *, remove_inline_citations: bool = False, image_base_url: str | None = None) -> None:
     if section.html:
-        section.markdown = convert_fragment_to_markdown(section.html, remove_inline_citations=remove_inline_citations)
+        section.markdown = convert_fragment_to_markdown(section.html, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
     for child in section.children:
-        _populate_section_markdown(child, remove_inline_citations=remove_inline_citations)
+        _populate_section_markdown(child, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
