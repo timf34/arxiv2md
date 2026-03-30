@@ -91,6 +91,10 @@ echo -e "${GREEN}[7/8] Building and starting Docker containers...${NC}"
 docker-compose build
 docker-compose up -d
 
+# Clean up old Docker images/layers to prevent disk bloat
+echo -e "${YELLOW}Cleaning up old Docker images...${NC}"
+docker image prune -f
+
 # Wait for application to start
 echo -e "${YELLOW}Waiting for application to start...${NC}"
 sleep 10
@@ -154,9 +158,11 @@ else
     echo -e "${YELLOW}certbot --nginx -d $DOMAIN -d www.$DOMAIN${NC}"
 fi
 
-# Setup automatic SSL renewal
-echo -e "${GREEN}Setting up automatic SSL renewal...${NC}"
-(crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'") | crontab -
+# Setup automatic SSL renewal and weekly Docker cleanup
+echo -e "${GREEN}Setting up automatic SSL renewal and Docker cleanup...${NC}"
+(crontab -l 2>/dev/null | grep -v 'certbot renew' | grep -v 'docker system prune'; \
+ echo "0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"; \
+ echo "0 4 * * 0 docker system prune -f >> /var/log/docker-prune.log 2>&1") | crontab -
 
 # Final status
 echo -e "${GREEN}========================================${NC}"
