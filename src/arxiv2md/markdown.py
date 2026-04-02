@@ -57,7 +57,7 @@ def convert_html_to_markdown(html: str, *, remove_refs: bool = False, remove_toc
     return "\n\n".join(block for block in blocks if block).strip()
 
 
-def convert_fragment_to_markdown(html: str, *, remove_inline_citations: bool = False) -> str:
+def convert_fragment_to_markdown(html: str, *, remove_inline_citations: bool = False, image_base_url: str | None = None) -> str:
     """Convert an HTML fragment into Markdown without title/author/abstract handling.
 
     Parameters
@@ -72,7 +72,7 @@ def convert_fragment_to_markdown(html: str, *, remove_inline_citations: bool = F
     _strip_unwanted_elements(soup)
     convert_all_mathml_to_latex(soup)
     fix_tabular_tables(soup)
-    blocks = _serialize_children(soup, remove_inline_citations=remove_inline_citations)
+    blocks = _serialize_children(soup, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
     return "\n\n".join(block for block in blocks if block).strip()
 
 
@@ -119,20 +119,20 @@ def _remove_all_attributes(tag: Tag) -> None:
     tag.attrs = {}
 
 
-def _serialize_children(container: Tag, *, remove_inline_citations: bool = False) -> list[str]:
+def _serialize_children(container: Tag, *, remove_inline_citations: bool = False, image_base_url: str | None = None) -> list[str]:
     blocks: list[str] = []
     for child in container.children:
         if isinstance(child, NavigableString):
             continue
         if not isinstance(child, Tag):
             continue
-        blocks.extend(_serialize_block(child, remove_inline_citations=remove_inline_citations))
+        blocks.extend(_serialize_block(child, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url))
     return blocks
 
 
-def _serialize_block(tag: Tag, *, remove_inline_citations: bool = False) -> list[str]:
+def _serialize_block(tag: Tag, *, remove_inline_citations: bool = False, image_base_url: str | None = None) -> list[str]:
     if tag.name in {"section", "article", "div", "span"}:
-        return _serialize_children(tag, remove_inline_citations=remove_inline_citations)
+        return _serialize_children(tag, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
 
     if tag.name in {"h1", "h2", "h3", "h4", "h5", "h6"}:
         level = int(tag.name[1])
@@ -150,7 +150,7 @@ def _serialize_block(tag: Tag, *, remove_inline_citations: bool = False) -> list
         return ["\n".join(lines)] if lines else []
 
     if tag.name == "figure":
-        figure = _serialize_figure(tag, remove_inline_citations=remove_inline_citations)
+        figure = _serialize_figure(tag, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
         return [figure] if figure else []
 
     if tag.name == "table":
@@ -166,7 +166,7 @@ def _serialize_block(tag: Tag, *, remove_inline_citations: bool = False) -> list
     if tag.name == "br":
         return []
 
-    return _serialize_children(tag, remove_inline_citations=remove_inline_citations)
+    return _serialize_children(tag, remove_inline_citations=remove_inline_citations, image_base_url=image_base_url)
 
 
 def _serialize_abstract(tag: Tag) -> list[str]:
@@ -342,7 +342,7 @@ def _serialize_table(table: Tag, *, remove_inline_citations: bool = False) -> st
     return "\n".join(lines)
 
 
-def _serialize_figure(figure: Tag, *, remove_inline_citations: bool = False) -> str:
+def _serialize_figure(figure: Tag, *, remove_inline_citations: bool = False, image_base_url: str | None = None) -> str:
     # Check if this is a table figure (ltx_table class)
     figure_classes = " ".join(figure.get("class", []))
     is_table_figure = "ltx_table" in figure_classes
@@ -375,7 +375,16 @@ def _serialize_figure(figure: Tag, *, remove_inline_citations: bool = False) -> 
             lines.append(f"Figure: {caption}")
         if src:
             image_label = alt or "Image"
-            lines.append(f"{image_label}: {src}")
+            if image_base_url:
+                if src.startswith(("http://", "https://")):
+                    full_url = src
+                elif src.startswith("/"):
+                    full_url = f"https://arxiv.org{src}"
+                else:
+                    full_url = f"{image_base_url}{src}"
+                lines.append(f"![{image_label}]({full_url})")
+            else:
+                lines.append(f"{image_label}: {src}")
 
     return "\n".join(lines).strip()
 
