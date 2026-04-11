@@ -73,11 +73,30 @@ Rate limit: 30 requests/minute per IP.
 ### Python Library
 
 ```python
+from arxiv2md import ingest_paper_sync
+
+result = ingest_paper_sync("2501.11120v1")
+print(result.content)
+```
+
+An async version is also available for use inside async contexts (e.g. Jupyter notebooks, async frameworks):
+
+```python
 from arxiv2md import ingest_paper
 
 result = await ingest_paper("2501.11120v1")
-print(result.content)
 ```
+
+Both accept the same optional keyword arguments:
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `remove_refs` | `True` | Remove bibliography/references sections |
+| `remove_toc` | `True` | Remove table of contents |
+| `remove_inline_citations` | `True` | Remove inline citation text |
+| `section_filter_mode` | `"exclude"` | `"include"` or `"exclude"` for section filtering |
+| `sections` | `None` (all) | List of section titles to include/exclude |
+| `include_frontmatter` | `False` | Prepend YAML frontmatter with paper metadata |
 
 ### For AI Agents
 
