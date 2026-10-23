@@ -206,3 +206,29 @@ def test_no_base_url_preserves_relative_paths() -> None:
 
     result = convert_fragment_to_markdown(html)
     assert "extracted/fig1.png" in result
+
+
+def test_span_paragraphs_in_framed_block_keep_their_text() -> None:
+    """Test that paragraphs LaTeXML writes as ``span.ltx_p`` keep their text.
+
+    Inside a framed box LaTeXML emits ``<span class="ltx_p">`` instead of
+    ``<p>``, as in Section 4 of arXiv:2405.06624.
+    """
+    html = """
+    <div class="ltx_para"><span class="ltx_inline-logical-block ltx_framed ltx_framed_rectangle">
+    <span class="ltx_theorem ltx_theorem_example">
+    <h6 class="ltx_title ltx_runin ltx_title_theorem"><span class="ltx_tag ltx_tag_theorem">Example 4.1</span> (Code Translation).</h6>
+    <span class="ltx_para">
+    <span class="ltx_p"><br class="ltx_break"/><span class="ltx_text ltx_font_bold">Problem</span>: Translate code in one programming language to another.</span>
+    </span>
+    <span class="ltx_para">
+    <span class="ltx_p"><span class="ltx_text ltx_font_bold">Specification</span>: Functional correctness.</span>
+    </span>
+    </span>
+    </span></div>
+    """
+
+    result = convert_fragment_to_markdown(html)
+    assert "###### Example 4.1 (Code Translation)." in result
+    assert "Problem: Translate code in one programming language to another." in result
+    assert "Specification: Functional correctness." in result

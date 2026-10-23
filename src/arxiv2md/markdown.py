@@ -147,7 +147,10 @@ def _serialize_children(container: Tag, *, remove_inline_citations: bool = False
 
 
 def _serialize_block(tag: Tag, *, remove_inline_citations: bool = False) -> list[str]:
-    if tag.name in {"section", "article", "div", "span"}:
+    # LaTeXML writes the paragraphs inside a framed box as <span class="ltx_p">.
+    is_span_paragraph = tag.name == "span" and "ltx_p" in tag.get("class", [])
+
+    if tag.name in {"section", "article", "div", "span"} and not is_span_paragraph:
         return _serialize_children(tag, remove_inline_citations=remove_inline_citations)
 
     if tag.name in {"h1", "h2", "h3", "h4", "h5", "h6"}:
@@ -157,7 +160,7 @@ def _serialize_block(tag: Tag, *, remove_inline_citations: bool = False) -> list
             return []
         return [f"{'#' * level} {heading}"]
 
-    if tag.name == "p":
+    if tag.name == "p" or is_span_paragraph:
         paragraph = _serialize_paragraph(tag, remove_inline_citations=remove_inline_citations)
         return [paragraph] if paragraph else []
 
