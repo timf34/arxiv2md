@@ -206,3 +206,144 @@ def test_no_base_url_preserves_relative_paths() -> None:
 
     result = convert_fragment_to_markdown(html)
     assert "extracted/fig1.png" in result
+
+
+def test_numbered_display_equation_is_one_block_with_tag() -> None:
+    """Trimmed from arXiv:1706.03762, Eq. (1): no nested $, number kept as \\tag."""
+    html = r"""
+    <table class="ltx_equation ltx_eqn_table" id="S3.E1"><tbody><tr class="ltx_equation ltx_eqn_row">
+        <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+        <td class="ltx_eqn_cell ltx_align_center"><math display="block"><semantics>
+            <annotation encoding="application/x-tex">\mathrm{Attention}(Q,K,V)=\mathrm{softmax}(\frac{QK^{T}}{\sqrt{d_{k}}})V</annotation>
+        </semantics></math></td>
+        <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+        <td class="ltx_eqn_cell ltx_eqn_eqno"><span class="ltx_tag ltx_tag_equation">(1)</span></td>
+    </tr></tbody></table>
+    """
+
+    markdown = convert_fragment_to_markdown(html)
+
+    assert markdown == (
+        r"$$ \mathrm{Attention}(Q,K,V)=\mathrm{softmax}(\frac{QK^{T}}{\sqrt{d_{k}}})V \tag{1} $$"
+    )
+
+
+def test_aligned_display_equation_keeps_rows_apart() -> None:
+    """Trimmed from arXiv:1706.03762, the MultiHead equations in Section 3.2.2."""
+    html = r"""
+    <table class="ltx_equationgroup ltx_eqn_align ltx_eqn_table">
+      <tbody><tr class="ltx_equation ltx_eqn_row">
+        <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+        <td class="ltx_td ltx_align_right ltx_eqn_cell"><math><semantics>
+            <annotation encoding="application/x-tex">\displaystyle\mathrm{MultiHead}(Q,K,V)</annotation></semantics></math></td>
+        <td class="ltx_td ltx_align_left ltx_eqn_cell"><math><semantics>
+            <annotation encoding="application/x-tex">\displaystyle=\mathrm{Concat}(\mathrm{head_{1}},...,\mathrm{head_{h}})W^{O}</annotation></semantics></math></td>
+        <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+      </tr></tbody>
+      <tbody><tr class="ltx_equation ltx_eqn_row">
+        <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+        <td class="ltx_td ltx_align_right ltx_eqn_cell"><math><semantics>
+            <annotation encoding="application/x-tex">\displaystyle\text{where}~\mathrm{head_{i}}</annotation></semantics></math></td>
+        <td class="ltx_td ltx_align_left ltx_eqn_cell"><math><semantics>
+            <annotation encoding="application/x-tex">\displaystyle=\mathrm{Attention}(QW^{Q}_{i},KW^{K}_{i},VW^{V}_{i})</annotation></semantics></math></td>
+        <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+      </tr></tbody>
+    </table>
+    """
+
+    markdown = convert_fragment_to_markdown(html)
+
+    assert markdown == (
+        r"$$ \begin{aligned} "
+        r"\displaystyle\mathrm{MultiHead}(Q,K,V) & \displaystyle=\mathrm{Concat}(\mathrm{head_{1}},...,\mathrm{head_{h}})W^{O}"
+        r" \\ "
+        r"\displaystyle\text{where}~\mathrm{head_{i}} & \displaystyle=\mathrm{Attention}(QW^{Q}_{i},KW^{K}_{i},VW^{V}_{i})"
+        r" \end{aligned} $$"
+    )
+
+
+_ALIGNED_WITH_NOTES = r"""
+<table class="ltx_equationgroup ltx_eqn_align ltx_eqn_table">
+  <tbody><tr class="ltx_equation ltx_eqn_row">
+    <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+    <td class="ltx_td ltx_eqn_cell"></td>
+    <td class="ltx_td ltx_align_left ltx_eqn_cell"><math><annotation encoding="application/x-tex">\displaystyle\phi_{1}^{i}(x^{*})</annotation></math></td>
+    <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+  </tr></tbody>
+  <tbody><tr class="ltx_equation ltx_eqn_row">
+    <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+    <td class="ltx_td ltx_eqn_cell"></td>
+    <td class="ltx_td ltx_align_left ltx_eqn_cell"> <span class="ltx_text ltx_markedasmath">(By definition of <math><annotation encoding="application/x-tex">\phi_{1}</annotation></math>)</span></td>
+    <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+  </tr></tbody>
+  <tbody><tr class="ltx_equation ltx_eqn_row">
+    <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+    <td class="ltx_td ltx_align_right ltx_eqn_cell"><math><annotation encoding="application/x-tex">\displaystyle=</annotation></math></td>
+    <td class="ltx_td ltx_align_left ltx_eqn_cell"><math><annotation encoding="application/x-tex">\displaystyle P(\exists x\in T)</annotation></math></td>
+    <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+  </tr></tbody>
+</table>
+"""
+
+
+def test_display_equation_inside_paragraph() -> None:
+    """Trimmed from arXiv:1312.6114, Appendix D: LaTeXML puts this table inside a <p>."""
+    html = r"""
+    <p class="ltx_p">Then
+    <table class="ltx_equationgroup ltx_eqn_align ltx_eqn_table"><tbody><tr class="ltx_equation ltx_eqn_row">
+        <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+        <td class="ltx_td ltx_align_right ltx_eqn_cell"><math><semantics><mi>p</mi>
+            <annotation encoding="application/x-tex">\displaystyle p_{\theta}(x)\simeq q(z)</annotation>
+        </semantics></math></td>
+        <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+    </tr></tbody></table></p>
+    """
+
+    markdown = convert_fragment_to_markdown(html)
+
+    assert markdown == "Then\n" + r"$$ \displaystyle p_{\theta}(x)\simeq q(z) $$"
+
+
+def test_text_in_equation_cell_is_kept() -> None:
+    """Trimmed from arXiv:1809.06452: the remark between two rows must not be dropped."""
+    markdown = convert_fragment_to_markdown(_ALIGNED_WITH_NOTES)
+
+    assert r"\text{(By definition of }\phi_{1}\text{)}" in markdown
+
+
+def test_empty_alignment_cells_keep_columns_in_place() -> None:
+    """Trimmed from arXiv:1809.06452: a row led by an empty cell must not shift left."""
+    markdown = convert_fragment_to_markdown(_ALIGNED_WITH_NOTES)
+
+    assert markdown == (
+        r"$$ \begin{aligned} "
+        r"& \displaystyle\phi_{1}^{i}(x^{*})"
+        r" \\ "
+        r"& \text{(By definition of }\phi_{1}\text{)}"
+        r" \\ "
+        r"\displaystyle= & \displaystyle P(\exists x\in T)"
+        r" \end{aligned} $$"
+    )
+
+
+def test_aligned_equation_with_numbered_rows_gets_one_block_per_number() -> None:
+    """A tag can only number a whole block, so each numbered row ends one."""
+    html = r"""
+    <table class="ltx_equationgroup ltx_eqn_table">
+      <tr class="ltx_eqn_row"><td><math><annotation encoding="application/x-tex">a</annotation></math></td>
+          <td><math><annotation encoding="application/x-tex">=b</annotation></math></td>
+          <td class="ltx_eqn_eqno"><span class="ltx_tag_equation">(2)</span></td></tr>
+      <tr class="ltx_eqn_row"><td><math><annotation encoding="application/x-tex">c</annotation></math></td>
+          <td><math><annotation encoding="application/x-tex">=d</annotation></math></td></tr>
+      <tr class="ltx_eqn_row"><td><math><annotation encoding="application/x-tex">e</annotation></math></td>
+          <td><math><annotation encoding="application/x-tex">=f</annotation></math></td>
+          <td class="ltx_eqn_eqno"><span class="ltx_tag_equation">(3)</span></td></tr>
+    </table>
+    """
+
+    markdown = convert_fragment_to_markdown(html)
+
+    assert markdown == (
+        "$$ a =b \\tag{2} $$\n\n"
+        r"$$ \begin{aligned} c & =d \\ e & =f \end{aligned} \tag{3} $$"
+    )

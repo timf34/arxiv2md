@@ -13,6 +13,7 @@ except ImportError as exc:  # pragma: no cover - runtime dependency check
 
 
 _EQUATION_TABLE_RE = re.compile(r"ltx_equationgroup|ltx_eqn_align|ltx_eqn_table")
+_EQUATION_PADDING_RE = re.compile(r"ltx_eqn_center_pad|ltx_eqn_eqno")
 
 
 def convert_html_to_markdown(html: str, *, remove_refs: bool = False, remove_toc: bool = False) -> str:
@@ -99,14 +100,23 @@ def _strip_unwanted_elements(soup: BeautifulSoup) -> None:
         tag.decompose()
 
 
+def _math_to_latex(math: Tag) -> str | None:
+    annotation = math.find("annotation", attrs={"encoding": "application/x-tex"})
+    if not (annotation and annotation.text):
+        return None
+    latex_source = annotation.text.strip()
+    latex_source = re.sub(r"(?<!\\)%", "", latex_source)
+    latex_source = re.sub(r"\\([_^])", r"\1", latex_source)
+    latex_source = re.sub(r"\\(?=[\[\]])", "", latex_source)
+    return latex_source
+
+
 def convert_all_mathml_to_latex(root: BeautifulSoup) -> None:
     for math in root.find_all("math"):
-        annotation = math.find("annotation", attrs={"encoding": "application/x-tex"})
-        if annotation and annotation.text:
-            latex_source = annotation.text.strip()
-            latex_source = re.sub(r"(?<!\\)%", "", latex_source)
-            latex_source = re.sub(r"\\([_^])", r"\1", latex_source)
-            latex_source = re.sub(r"\\(?=[\[\]])", "", latex_source)
+        if math.find_parent("table", class_=_EQUATION_TABLE_RE):
+            continue  # _serialize_equation_table builds the display block from it
+        latex_source = _math_to_latex(math)
+        if latex_source is not None:
             math.replace_with(f"${latex_source}$")
         else:
             math.replace_with(math.get_text(" ", strip=True))
@@ -259,6 +269,9 @@ def _serialize_inline(node: Tag | NavigableString, *, remove_inline_citations: b
             return ""
         return _serialize_children_inline(node, remove_inline_citations=remove_inline_citations)
 
+    if node.name == "table" and _EQUATION_TABLE_RE.search(" ".join(node.get("class", []))):
+        return f"\n{_serialize_equation_table(node)}\n"  # LaTeXML sometimes nests these in a <p>
+
     if node.name == "math":
         text = node.get_text(" ", strip=True)
         return f"${text}$" if text else ""
@@ -309,10 +322,7 @@ def _serialize_toc(toc_nav: Tag) -> str:
 def _serialize_table(table: Tag, *, remove_inline_citations: bool = False) -> str:
     classes = " ".join(table.get("class", []))
     if _EQUATION_TABLE_RE.search(classes):
-        eqn_text = _normalize_text(table.get_text(" ", strip=True))
-        if not eqn_text:
-            return ""
-        return f"$$ {eqn_text} $$"
+        return _serialize_equation_table(table)
 
     rows = []
     # Find rows in tbody, thead, tfoot, or directly in table
@@ -356,6 +366,63 @@ def _serialize_table(table: Tag, *, remove_inline_citations: bool = False) -> st
     for row in normalized[1:]:
         lines.append("| " + " | ".join(row) + " |")
     return "\n".join(lines)
+
+
+def _serialize_equation_table(table: Tag) -> str:
+    r"""Serialize an equation table as ``$$`` blocks, one per numbered equation.
+
+    The number becomes ``\tag{n}``. The rows of an aligned group stay apart in
+    an ``aligned`` environment, with the cells of a row separated by ``&``. A
+    tag can only number a whole block, so each numbered row ends a block.
+    """
+    if not any(_math_to_latex(math) is not None for math in table.find_all("math")):
+        eqn_text = _normalize_text(table.get_text(" ", strip=True))
+        return f"$$ {eqn_text} $$" if eqn_text else ""
+
+    blocks: list[str] = []
+    rows: list[list[str]] = []
+    for tr in table.find_all("tr"):
+        if tr.find_parent("table") is not table:
+            continue
+        cells = [
+            _equation_cell_to_latex(td)
+            for td in tr.find_all("td", recursive=False)
+            if not _EQUATION_PADDING_RE.search(" ".join(td.get("class", [])))
+        ]
+        if any(cells):
+            rows.append(cells)
+        number = tr.find(class_="ltx_tag_equation")
+        if number and rows:
+            blocks.append(_display_block(rows, _normalize_text(number.get_text()).strip("()")))
+            rows = []
+    if rows:
+        blocks.append(_display_block(rows, None))
+    return "\n\n".join(blocks)
+
+
+def _equation_cell_to_latex(cell: Tag) -> str:
+    """Return a cell's maths and words as TeX, with the words in ``\\text{}``."""
+    parts: list[str] = []
+    for node in cell.descendants:
+        if isinstance(node, NavigableString):
+            if node.find_parent("math"):
+                continue
+            text = re.sub(r"\s+", " ", str(node))
+            escaped = re.sub(r"([{}$&#%_^~])", r"\\\1", text.replace("\\", r"\textbackslash{}"))
+            parts.append(f"\\text{{{escaped}}}" if text.strip() else " ")
+        elif node.name == "math":
+            latex_source = _math_to_latex(node)
+            parts.append(latex_source if latex_source is not None else node.get_text(" ", strip=True))
+    return "".join(parts).strip()
+
+
+def _display_block(rows: list[list[str]], number: str | None) -> str:
+    if len(rows) == 1:
+        body = " ".join(filter(None, rows[0]))
+    else:
+        body = r"\begin{aligned} " + r" \\ ".join(" & ".join(cells) for cells in rows) + r" \end{aligned}"
+    body = _normalize_text(body)  # empty cells leave runs of spaces
+    return rf"$$ {body} \tag{{{number}}} $$" if number else f"$$ {body} $$"
 
 
 def _serialize_figure(figure: Tag, *, remove_inline_citations: bool = False) -> str:
