@@ -87,7 +87,9 @@ def _extract_from_url(url: str) -> tuple[str, str | None]:
 
     if path_parts[0] in _ARXIV_PATH_KINDS and len(path_parts) >= 2:
         kind = path_parts[0]
-        arxiv_part = path_parts[1]
+        # Join the remaining parts so old-style identifiers (e.g. cs/9901001v2)
+        # survive as a single identifier instead of being truncated to "cs".
+        arxiv_part = "/".join(path_parts[1:])
         if kind == "pdf" and arxiv_part.endswith(".pdf"):
             arxiv_part = arxiv_part[: -len(".pdf")]
         return _normalize_id(arxiv_part)

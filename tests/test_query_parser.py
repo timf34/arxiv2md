@@ -14,6 +14,8 @@ from arxiv2md.query_parser import parse_arxiv_input
         ("https://arxiv.org/abs/2501.11120", "2501.11120", None),
         ("https://arxiv.org/pdf/2501.11120v2.pdf", "2501.11120v2", "v2"),
         ("cs/9901001v2", "cs/9901001v2", "v2"),
+        ("https://arxiv.org/abs/cs/9901001v2", "cs/9901001v2", "v2"),
+        ("https://arxiv.org/pdf/cs/9901001.pdf", "cs/9901001", None),
     ],
 )
 def test_parse_arxiv_inputs(input_text: str, arxiv_id: str, version: str | None) -> None:
